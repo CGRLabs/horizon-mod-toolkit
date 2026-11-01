@@ -27,6 +27,12 @@ Mod Toolkit CLI skeleton (Milestone M2) for Horizon content mods.
 - `cargo` and (for build/check) `cargo-horizon-mod` (`cargo install cargo-horizon-mod`).
 - `horizon-inspector` crate (path dependency `../mod-inspector`).
 
+## Folder Layout
+
+- `src/` - Rust source code for the CLI
+- `mods/` - Place your `.hmod` content mods here
+- `shaders/` - Place your `.hshader` shader packs here
+
 ## Build
 
 ```sh
