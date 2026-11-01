@@ -62,10 +62,19 @@ fn run_cargo_horizon_mod(args: &[&str], cwd: &Path) -> ExitCode {
     }
 
     // Preflight cargo-horizon-mod availability.
-    let tool_check = Command::new("cargo")
+    // Prefer `cargo horizon-mod --help`; fall back to the standalone
+    // `cargo-horizon-mod` binary so we don't falsely report a missing tool
+    // just because `cargo horizon-mod --version` isn't implemented upstream.
+    let tool_ok = Command::new("cargo")
         .args(["horizon-mod", "--help"])
-        .output();
-    let tool_ok = tool_check.map(|o| o.status.success()).unwrap_or(false);
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+        || Command::new("cargo-horizon-mod")
+            .args(["--help"])
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false);
     if !tool_ok {
         eprintln!(
             "error: cargo-horizon-mod is not installed or not on PATH.\n\
