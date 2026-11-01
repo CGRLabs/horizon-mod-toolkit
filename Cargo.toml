@@ -1,0 +1,18 @@
+[package]
+name = "horizon-mod-toolkit"
+version = "0.1.0"
+edition = "2021"
+description = "Mod Toolkit CLI for Horizon content mods"
+authors = ["CGRLabs"]
+license = "MIT"
+
+[[bin]]
+name = "horizon-mod-toolkit"
+path = "src/main.rs"
+
+[dependencies]
+horizon-inspector = { path = "../mod-inspector" }
+
+[dev-dependencies]
+tempfile = "3"
+zip = { version = "2", default-features = false, features = ["deflate"] }
