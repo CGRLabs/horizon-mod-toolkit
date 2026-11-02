@@ -62,19 +62,22 @@ fn run_cargo_horizon_mod(args: &[&str], cwd: &Path) -> ExitCode {
     }
 
     // Preflight cargo-horizon-mod availability.
-    // Prefer `cargo horizon-mod --help`; fall back to the standalone
-    // `cargo-horizon-mod` binary so we don't falsely report a missing tool
-    // just because `cargo horizon-mod --version` isn't implemented upstream.
+    // `cargo --list` lists installed cargo subcommands; if `horizon-mod`
+    // shows up, the tool is on PATH and usable. Fall back to checking for
+    // the standalone `cargo-horizon-mod` binary.
     let tool_ok = Command::new("cargo")
-        .args(["horizon-mod", "--help"])
+        .args(["--list"])
         .output()
-        .map(|o| o.status.success())
+        .map(|o| {
+            String::from_utf8_lossy(&o.stdout)
+                .lines()
+                .any(|line| line.trim_start().starts_with("horizon-mod "))
+        })
         .unwrap_or(false)
-        || Command::new("cargo-horizon-mod")
-            .args(["--help"])
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false);
+        || match Command::new("cargo-horizon-mod").arg("--version").output() {
+            Ok(_) => true, // binary exists (even if --version isn't implemented upstream)
+            Err(e) => e.kind() != std::io::ErrorKind::NotFound,
+        };
     if !tool_ok {
         eprintln!(
             "error: cargo-horizon-mod is not installed or not on PATH.\n\
@@ -663,19 +666,34 @@ fn cmd_doctor() -> ExitCode {
         Err(_) => println!("rustc: NOT FOUND"),
     }
     // cargo-horizon-mod
-    match Command::new("cargo").args(["horizon-mod", "--help"]).output() {
-        Ok(o) if o.status.success() => {
-            println!("cargo-horizon-mod: {}", String::from_utf8_lossy(&o.stdout).trim());
-        }
-        _ => {
-            // try direct binary
-            match Command::new("cargo-horizon-mod").arg("--help").output() {
-                Ok(o) if o.status.success() => {
-                    println!("cargo-horizon-mod: {}", String::from_utf8_lossy(&o.stdout).trim());
+    let chm_found = Command::new("cargo")
+        .args(["--list"])
+        .output()
+        .map(|o| {
+            String::from_utf8_lossy(&o.stdout)
+                .lines()
+                .any(|line| line.trim_start().starts_with("horizon-mod "))
+        })
+        .unwrap_or(false)
+        || match Command::new("cargo-horizon-mod").arg("--version").output() {
+            Ok(_) => true,
+            Err(e) => e.kind() != std::io::ErrorKind::NotFound,
+        };
+    if chm_found {
+        // cargo-horizon-mod is installed; show its usage line (no args -> usage to stderr).
+        match Command::new("cargo").args(["horizon-mod"]).output() {
+            Ok(o) => {
+                let usage = String::from_utf8_lossy(&o.stderr).trim().to_string();
+                if !usage.is_empty() {
+                    println!("cargo-horizon-mod: {usage}");
+                } else {
+                    println!("cargo-horizon-mod: found on PATH");
                 }
-                _ => println!("cargo-horizon-mod: NOT FOUND (install with: cargo install cargo-horizon-mod)"),
             }
+            Err(e) => println!("cargo-horizon-mod: found on PATH but not runnable ({e})"),
         }
+    } else {
+        println!("cargo-horizon-mod: NOT FOUND (install with: cargo install cargo-horizon-mod)");
     }
 
     // check a few locations

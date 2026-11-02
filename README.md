@@ -12,21 +12,35 @@ Mod Toolkit CLI for Horizon content mods and shader packs.
 - `mods/` - Place your `.hmod` content mods here
 - `shaders/` - Place your `.hshader` shader packs here
 
-## Quick Install (AI-friendly)
+## Quick Install
 
-Run this in PowerShell:
+### Prerequisites
 
-```powershell
-git clone https://github.com/CGRLabs/horizon-mod-toolkit.git
-cd horizon-mod-toolkit
+1. **Rust toolchain** — install from https://rustup.rs/
+2. **`cargo-horizon-mod`** — required for `build` and `check`:
+   ```sh
+   cargo install cargo-horizon-mod
+   ```
+3. **`horizon-mod-inspector`** — required for `inspect` and `compat`. Clone it alongside
+   this repo so the Cargo path dependency resolves:
+   ```sh
+   git clone https://github.com/CGRLabs/horizon-mod-toolkit.git
+   git clone https://github.com/CGRLabs/horizon-inspector.git
+   # The inspector checkout must sit next to the toolkit checkout:
+   #   horizon-mod-toolkit/
+   #   horizon-inspector/
+   ```
+
+### Build
+
+From inside `horizon-mod-toolkit`:
+
+```sh
 cargo build --release
+cargo test
 ```
 
-Or use the installer:
-
-```powershell
-iwr -useb https://raw.githubusercontent.com/CGRLabs/horizon-mod-toolkit/main/install.ps1 | iex
-```
+The release binary is at `target/release/horizon-mod-toolkit`.
 
 ## Commands
 
